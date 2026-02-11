@@ -28,7 +28,7 @@ fecha_nacimiento DATE,
 sexo VARCHAR(20),
 id_cliente INT NOT NULL,
 PRIMARY KEY (id_mascota),
-FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente)
+FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente) ON DELETE CASCADE
 );
 
 -- CREACION DE LA TABLA VETERINARIOS
@@ -50,8 +50,8 @@ estado VARCHAR(20) NOT NULL,
 id_mascota INT NOT NULL,
 id_veterinario INT NOT NULL,
 PRIMARY KEY (id_turno),
-FOREIGN KEY (id_mascota) REFERENCES mascotas(id_mascota),
-FOREIGN KEY (id_veterinario) REFERENCES veterinarios(id_veterinario)
+FOREIGN KEY (id_mascota) REFERENCES mascotas(id_mascota) ON DELETE CASCADE,
+FOREIGN KEY (id_veterinario) REFERENCES veterinarios(id_veterinario) ON DELETE CASCADE
 );
 
 -- CREACION DE LA TABLA CONSULTAS
@@ -62,7 +62,7 @@ diagnostico VARCHAR(100),
 observaciones VARCHAR(200),
 id_turno INT NOT NULL,
 PRIMARY KEY (id_consulta),
-FOREIGN KEY (id_turno) REFERENCES turnos(id_turno)
+FOREIGN KEY (id_turno) REFERENCES turnos(id_turno) ON DELETE CASCADE
 );
 
 -- CREACION DE LA TABLA SERVICIOS
@@ -84,8 +84,8 @@ estado_pago VARCHAR(20) NOT NULL,
 id_consulta INT NOT NULL,
 id_cliente INT NOT NULL,
 PRIMARY KEY (id_pago),
-FOREIGN KEY (id_consulta) REFERENCES consultas(id_consulta),
-FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente)
+FOREIGN KEY (id_consulta) REFERENCES consultas(id_consulta) ON DELETE CASCADE,
+FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente) ON DELETE CASCADE
 );
 
 -- CREACION DE LA TABLA HISTORIAL MEDICO
@@ -96,8 +96,8 @@ descripcion VARCHAR(100),
 id_mascota INT,
 id_consulta INT,
 PRIMARY KEY (id_historial),
-FOREIGN KEY (id_mascota) REFERENCES mascotas(id_mascota),
-FOREIGN KEY (id_consulta) REFERENCES consultas(id_consulta)
+FOREIGN KEY (id_mascota) REFERENCES mascotas(id_mascota) ON DELETE CASCADE,
+FOREIGN KEY (id_consulta) REFERENCES consultas(id_consulta) ON DELETE CASCADE
 );
 
 -- CREACION DE LA TABLA INTERMEDIA CONSULTAS SERVICIOS QUE RELACIONA A AMBAS
@@ -107,8 +107,8 @@ CREATE TABLE IF NOT EXISTS consultas_servicios(
 id_consulta INT NOT NULL,
 id_servicio INT NOT NULL,
 PRIMARY KEY (id_consulta, id_servicio),
-FOREIGN KEY (id_consulta) REFERENCES consultas(id_consulta),
-FOREIGN KEY (id_servicio) REFERENCES servicios(id_servicio)
+FOREIGN KEY (id_consulta) REFERENCES consultas(id_consulta) ON DELETE CASCADE,
+FOREIGN KEY (id_servicio) REFERENCES servicios(id_servicio) ON DELETE CASCADE
 );
 
 -- ///////////// CREACION DE LOS INDICES /////////////
