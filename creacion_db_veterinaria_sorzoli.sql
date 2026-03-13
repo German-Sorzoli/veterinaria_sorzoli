@@ -1,5 +1,7 @@
 -- ///////////// CREACION DE LA BASE DE DATOS /////////////
 
+DROP DATABASE veterinaria_sorzoli;
+
 CREATE DATABASE IF NOT EXISTS veterinaria_sorzoli;
 
 -- ASIGNACION DE LA BASE DE DATOS
@@ -80,7 +82,7 @@ id_pago INT AUTO_INCREMENT,
 fecha_pago DATE NOT NULL,
 monto DECIMAL(10,2) NOT NULL,
 medio_pago VARCHAR(30) NOT NULL,
-estado_pago VARCHAR(20) NOT NULL,
+estado_pago VARCHAR(20) NOT NULL DEFAULT 'pendiente',
 id_consulta INT NOT NULL,
 id_cliente INT NOT NULL,
 PRIMARY KEY (id_pago),
