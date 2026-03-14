@@ -63,7 +63,15 @@ INSERT INTO turnos (fecha, hora, estado, id_mascota, id_veterinario) VALUES
 ('2025-06-06','12:15:00','pendiente',12,3),
 ('2025-06-07','09:45:00','pendiente',1,2),
 ('2025-06-07','10:45:00','pendiente',2,1),
-('2025-06-08','11:45:00','pendiente',3,4);
+('2025-06-08','11:45:00','pendiente',3,4),
+('2025-06-10','09:00:00','completado',1,3),
+('2025-06-15','10:00:00','completado',1,2),
+('2025-06-12','11:00:00','completado',2,1),
+('2025-06-18','12:00:00','completado',3,4),
+('2025-06-20','09:30:00','completado',4,2),
+('2025-06-21','10:30:00','completado',5,3),
+('2025-06-22','11:30:00','completado',6,1),
+('2025-06-23','12:30:00','completado',7,4);
 
 -- ////////////////// CONSULTAS //////////////////
 
@@ -77,7 +85,15 @@ INSERT INTO consultas (fecha_consulta, diagnostico, observaciones, id_turno) VAL
 ('2025-06-05','Problema respiratorio','Se indican estudios',10),
 ('2025-06-03','Control dental','Limpieza recomendada',6),
 ('2025-06-02','Chequeo general','Buen estado general',4),
-('2025-06-06','Dolor muscular','Reposo por 5 dias',11);
+('2025-06-06','Dolor muscular','Reposo por 5 dias',11),
+('2025-06-10','Control general','Chequeo anual',16),
+('2025-06-15','Vacunacion','Refuerzo de vacuna',17),
+('2025-06-12','Problema digestivo','Se recomienda dieta especial',18),
+('2025-06-18','Dolor articular','Tratamiento antiinflamatorio',19),
+('2025-06-20','Control general','Mascota en buen estado',20),
+('2025-06-21','Alergia','Tratamiento antihistaminico',21),
+('2025-06-22','Infeccion leve','Antibiotico por 5 dias',22),
+('2025-06-23','Chequeo general','Sin observaciones',23);
 
 -- ////////////////// SERVICIOS //////////////////
 
@@ -125,4 +141,12 @@ INSERT INTO historial_medico (fecha_registro, descripcion, id_mascota, id_consul
 ('2025-06-05','Problema respiratorio',10,7),
 ('2025-06-03','Control dental',6,8),
 ('2025-06-02','Chequeo general',4,9),
-('2025-06-06','Dolor muscular',11,10);
+('2025-06-06','Dolor muscular',11,10),
+('2025-06-10','Chequeo anual',1,11),
+('2025-06-15','Vacuna aplicada',1,12),
+('2025-06-12','Problema digestivo tratado',2,13),
+('2025-06-18','Dolor articular controlado',3,14),
+('2025-06-20','Control general',4,15),
+('2025-06-21','Tratamiento alergia',5,16),
+('2025-06-22','Infeccion tratada',6,17),
+('2025-06-23','Chequeo general',7,18);

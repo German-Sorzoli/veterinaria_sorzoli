@@ -2,7 +2,7 @@ USE veterinaria_sorzoli;
 
 -- ///////////// CREACION DE VISTAS /////////////
 
-SELECT * FROM vista_clientes_mascotas;
+-- SELECT * FROM vista_clientes_mascotas;
 
 -- Vista para el listado de mascotas y su respectivo dueño
 CREATE OR REPLACE VIEW vista_clientes_mascotas AS
@@ -73,12 +73,112 @@ ORDER BY m.nombre, co.fecha_consulta DESC;
 
 -- ///////////// CREACION DE FUNCIONES /////////////
 
-DELIMITER // 
+-- Declaro una funcion que me permita calcular la edad de la mascota en años
 
-CREATE FUNCTION 
+DELIMITER //
+
+DROP FUNCTION IF EXISTS veterinaria_sorzoli.fn_calculo_edad_mascota //
+
+CREATE FUNCTION veterinaria_sorzoli.fn_calculo_edad_mascota (_fecha_nac DATE)
+RETURNS INT
+DETERMINISTIC
 BEGIN
+	DECLARE _edad_mascota INT;
+    -- TIMESTAMPDIFF es una funcion que me permite restar dos fechas y expresarlas en años (en este caso)
+    -- Resto la fecha de nacimiento por la fecha actual y devuelvo ese resultado
+	SET _edad_mascota = TIMESTAMPDIFF(YEAR, _fecha_nac, CURDATE());
+	RETURN _edad_mascota;
+END//
 
-	RETURN
-END;
+DELIMITER ;
 
-//
+/*
+-- EJEMPLO DE LA FUNCION
+SELECT 
+	m.nombre,
+    m.especie,
+    m.raza,
+    m.fecha_nacimiento,
+    veterinaria_sorzoli.fn_calculo_edad_mascota(m.fecha_nacimiento) AS años
+FROM mascotas AS m
+*/
+
+DELIMITER //
+
+DROP FUNCTION IF EXISTS veterinaria_sorzoli.fn_total_pagos_cliente //
+
+CREATE FUNCTION veterinaria_sorzoli.fn_total_pagos_cliente (_id_cliente INT)
+RETURNS DECIMAL(10,2)
+DETERMINISTIC
+BEGIN
+	DECLARE _total_pagos DECIMAL(10,2);
+    -- En este caso el resultado de la consulta sera una suma de montos, el resultado se muestra en un solo registro
+    SELECT SUM(monto) INTO _total_pagos FROM veterinaria_sorzoli.pagos WHERE veterinaria_sorzoli.pagos.id_cliente = _id_cliente AND estado_pago='Pagado';
+    -- La funcion interna IFNULL muestra el valor deseado, y si el valor devuelve NULL, lo reemplaza por un valor por defecto= 0
+	RETURN IFNULL(_total_pagos,0);
+END //
+
+DELIMITER ;
+
+/*
+-- EJEMPLO DE LA FUNCION
+SELECT DISTINCT
+	cl.nombre AS Nombre,
+    cl.apellido AS Apellido,
+	veterinaria_sorzoli.fn_total_pagos_cliente(cl.id_cliente) AS Total_De_Pagos
+FROM veterinaria_sorzoli.clientes AS cl
+*/
+
+-- Funcion que devuelve la cantidad de consultas de una mascota
+-- Pendiente
+
+DELIMITER //
+
+DROP FUNCTION IF EXISTS veterinaria_sorzoli.fn_cantidad_consultas_mascota //
+
+CREATE FUNCTION veterinaria_sorzoli.fn_cantidad_consultas_mascota (_id_mascota INT)
+RETURNS INT
+DETERMINISTIC
+BEGIN
+	DECLARE _cantidad_consultas INT;
+    -- Usando la funcion interna COUNT cuento la cantidad de filas que cumplen la condicion de ser el mismo ID, o sea, la cantidad de consultas en el historial
+	SELECT COUNT(*) INTO _cantidad_consultas FROM veterinaria_sorzoli.historial_medico AS hm WHERE hm.id_mascota = _id_mascota;
+	RETURN _cantidad_consultas;
+END//
+
+DELIMITER ;
+
+/*
+SELECT DISTINCT
+    m.nombre,
+    m.especie,
+    m.raza,
+    fn_cantidad_consultas_mascota(hm.id_mascota) AS CantidadDeConsultas
+FROM veterinaria_sorzoli.historial_medico AS hm
+JOIN veterinaria_sorzoli.mascotas AS m ON (hm.id_mascota = m.id_mascota)
+*/
+
+-- ///////////// CREACION DE STORED PROCEDURES /////////////
+
+-- Declaro un procedimiento para ver las mascotas de un cliente en orden alfabetico
+
+DELIMITER //
+ 
+ DROP PROCEDURE sp_mascotas_de_cliente //
+ 
+CREATE PROCEDURE sp_mascotas_de_cliente(IN _cliente INT)
+BEGIN
+SELECT
+	m.nombre,
+    m.especie,
+    m.raza,
+    m.sexo
+FROM mascotas AS m WHERE m.id_cliente = _cliente ORDER BY m.nombre;
+END//
+
+DELIMITER ;
+/*
+CALL sp_mascotas_de_cliente(1);
+*/
+
+-- Declaro un procedimiento
