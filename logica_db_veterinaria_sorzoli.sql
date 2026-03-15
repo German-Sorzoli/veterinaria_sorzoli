@@ -164,7 +164,7 @@ JOIN veterinaria_sorzoli.mascotas AS m ON (hm.id_mascota = m.id_mascota)
 
 DELIMITER //
  
- DROP PROCEDURE sp_mascotas_de_cliente //
+-- DROP PROCEDURE sp_mascotas_de_cliente //
  
 CREATE PROCEDURE sp_mascotas_de_cliente(IN _cliente INT)
 BEGIN
@@ -185,7 +185,7 @@ CALL sp_mascotas_de_cliente(1);
 
 DELIMITER //
 
-DROP PROCEDURE IF EXISTS sp_registrar_pago //
+-- DROP PROCEDURE IF EXISTS sp_registrar_pago //
 
 CREATE PROCEDURE sp_registrar_pago (
 IN _fecha DATE,
@@ -216,12 +216,12 @@ Cambiar ejemplo
 
 DELIMITER //
 
-DROP PROCEDURE IF EXISTS sp_registrar_turno //
+-- DROP PROCEDURE IF EXISTS sp_registrar_turno //
 
 CREATE PROCEDURE sp_registrar_turno (
 IN _fecha DATE,
 IN _hora TIME,
-IN _estado VARCHAR(30),
+IN _estado VARCHAR(20),
 IN _id_mascota INT,
 IN _id_veterinario INT
 )
@@ -232,3 +232,62 @@ END//
 
 DELIMITER ;
 
+-- Procedimiento para registrar una con consulta, verificar si el turno existe y segun el caso, insertar la informacion pertinente
+
+DELIMITER //
+
+-- DROP PROCEDURE IF EXISTS sp_registrar_consulta //
+
+CREATE PROCEDURE sp_registrar_consulta (
+IN _id_turno INT,
+IN _diagnostico VARCHAR(100),
+IN _observaciones VARCHAR(200)
+)
+
+BEGIN
+	DECLARE	_id_mascota INT;
+    DECLARE _estado_turno VARCHAR(20);
+    
+    -- Filtro datos de los turnos previamente ingresados, comparando el numero de turno reservado
+	SELECT id_mascota, estado
+		INTO _id_mascota, _estado_turno
+		FROM turnos
+	WHERE id_turno = _id_turno;
+    -- Si no hay resultado, descarto la opcion de ingresar consulta
+    IF _id_mascota IS NULL THEN
+	SELECT 'Error: El turno no existe' AS Mensaje;
+		-- Si el estado del turno no es pendiente (a concretar) se informará:
+        ELSE IF _estado_turno <> 'pendiente' THEN
+			SELECT 'Error: El turno ya fue realizada o cancelado' AS Mensaje;
+			ELSE
+				-- Inserto la informacion en la consulta
+				INSERT INTO consultas (fecha_consulta, diagnostico, observaciones, id_turno)
+				VALUES (CURDATE(), _diagnostico, _observaciones, _id_turno);
+				-- Actualizo el historial médico con la misma entrada
+				INSERT INTO historial_medico (fecha_registro, descripcion, id_mascota, id_consulta)
+				VALUES (CURDATE(), _diagnostico, _id_mascota, LAST_INSERT_ID()); -- LAST_INSERT_ID() Insertará y relacionar el ID del ultimo registro creado, en nuestro caso: consultas
+				-- Actualizo el estado del turno
+				UPDATE turnos
+				SET estado = 'completado'
+				WHERE id_turno = _id_turno;
+				
+				SELECT 'La consulta se insertó satisfactoriamente' AS Mensaje;
+				
+            END IF;
+		END IF;
+        
+END //
+
+DELIMITER ;
+
+/*
+-- id_turno: 13
+
+SELECT * FROM turnos;
+SELECT * FROM consultas;
+
+CALL sp_registrar_consulta(13, 'Checkeo general', 'Mascota en estado óptimo');
+
+SELECT * FROM turnos;
+SELECT * FROM consultas;
+*/
