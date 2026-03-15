@@ -104,7 +104,7 @@ SELECT
     m.raza,
     m.fecha_nacimiento,
     veterinaria_sorzoli.fn_calculo_edad_mascota(m.fecha_nacimiento) AS años
-FROM mascotas AS m
+FROM mascotas AS m;
 */
 
 -- Declaro una funcion que calcule el total de pagos de un cliente
@@ -128,7 +128,7 @@ SELECT DISTINCT
 	cl.nombre AS Nombre,
     cl.apellido AS Apellido,
 	veterinaria_sorzoli.fn_total_pagos_cliente(cl.id_cliente) AS Total_De_Pagos
-FROM veterinaria_sorzoli.clientes AS cl
+FROM veterinaria_sorzoli.clientes AS cl;
 */
 
 -- Funcion que devuelve la cantidad de consultas de una mascota
@@ -151,7 +151,7 @@ SELECT DISTINCT
     m.raza,
     fn_cantidad_consultas_mascota(hm.id_mascota) AS CantidadDeConsultas
 FROM veterinaria_sorzoli.historial_medico AS hm
-JOIN veterinaria_sorzoli.mascotas AS m ON (hm.id_mascota = m.id_mascota)
+JOIN veterinaria_sorzoli.mascotas AS m ON (hm.id_mascota = m.id_mascota);
 */
 
 -- ///////////// CREACION DE STORED PROCEDURES /////////////
@@ -177,44 +177,69 @@ CALL sp_mascotas_de_cliente(1);
 DROP PROCEDURE IF EXISTS sp_registrar_pago //
 
 CREATE PROCEDURE sp_registrar_pago (
-IN _fecha DATE,
-IN _monto DECIMAL (10,2),
-IN _medio VARCHAR(30) ,
-IN _estado VARCHAR(30),
-IN _id_consulta INT,
-IN _id_cliente INT
-)
-BEGIN
-	IF _monto> 0
-    THEN
-		INSERT INTO pagos (fecha_pago, monto, medio_pago, estado_pago, id_consulta, id_cliente)
-		VALUES (_fecha, _monto, _medio, _estado, _id_consulta, _id_cliente);
-	ELSE 
-		SELECT 'Error: el monto del pago debe ser mayor que 0' AS mensaje;
-	END IF;
-END//
+	IN _fecha DATE,
+	IN _monto DECIMAL (10,2),
+	IN _medio VARCHAR(30),
+	IN _estado VARCHAR(30),
+	IN _id_consulta INT,
+	IN _id_cliente INT
+	)
+	BEGIN
+		IF _monto> 0
+		THEN
+			INSERT INTO pagos (fecha_pago, monto, medio_pago, estado_pago, id_consulta, id_cliente)
+			VALUES (_fecha, _monto, _medio, _estado, _id_consulta, _id_cliente);
+		ELSE 
+			SELECT 'Error: el monto del pago debe ser mayor que 0' AS mensaje;
+		END IF;
+	END//
 
 /*
-CALL sp_registrar_pago(CURDATE(),8000,'Efectivo','Pagado',3,2);
-Cambiar ejemplo
+CALL sp_registrar_pago(CURDATE(),8000,'Efectivo','Pagado',11,1);
+SELECT * FROM pagos ORDER BY fecha_pago DESC;
 */
 
 -- Procedimiento para registrar un nuevo turno
 DROP PROCEDURE IF EXISTS sp_registrar_turno //
 
 CREATE PROCEDURE sp_registrar_turno (
-IN _fecha DATE,
-IN _hora TIME,
-IN _estado VARCHAR(20),
-IN _id_mascota INT,
-IN _id_veterinario INT
+    IN _fecha DATE,
+    IN _hora TIME,
+    IN _estado VARCHAR(20),
+    IN _nombre_mascota VARCHAR(100),
+    IN _nombre_veterinario VARCHAR(100),
+    IN _apellido_veterinario VARCHAR(100)
 )
 BEGIN
-	INSERT INTO turnos (fecha, hora, estado, id_mascota, id_veterinario)
+	-- Declaro variables para luego en base a los parámetros encontrar esos datos e insertar el nuevo turno
+    -- Me resulta mas comodo ingresar nombres antes que IDs
+    DECLARE _id_mascota INT;
+    DECLARE _id_veterinario INT;
+		-- Obtener ID de la mascota a partir del nombre
+		SELECT id_mascota 
+		INTO _id_mascota
+		FROM mascotas
+		WHERE nombre = _nombre_mascota
+		LIMIT 1;
+		-- Obtener ID del veterinario a partir de nombre y apellido
+		SELECT id_veterinario
+		INTO _id_veterinario
+		FROM veterinarios
+		WHERE nombre = _nombre_veterinario
+		  AND apellido = _apellido_veterinario
+		LIMIT 1;
+	-- Insertar el turno usando los IDs encontrados
+    INSERT INTO turnos (fecha, hora, estado, id_mascota, id_veterinario)
     VALUES (_fecha, _hora, _estado, _id_mascota, _id_veterinario);
-END//
+END //
 
--- Procedimiento para registrar una con consulta, verificar si el turno existe y segun el caso, insertar la informacion pertinente
+/*
+CALL sp_registrar_turno(CURDATE(),CURTIME(),'Pendiente','Bruno', 'Julieta', 'Sosa');
+-- Julieta Sosa: ID=8, Bruno ID= 10
+SELECT * FROM turnos ORDER BY fecha DESC;
+*/
+
+-- Procedimiento para registrar una consulta, verificar si el turno existe y segun el caso, insertar la informacion pertinente
 DROP PROCEDURE IF EXISTS sp_registrar_consulta //
 
 CREATE PROCEDURE sp_registrar_consulta (
@@ -249,24 +274,20 @@ BEGIN
 				UPDATE turnos
 				SET estado = 'completado'
 				WHERE id_turno = _id_turno;
-				
 				SELECT 'La consulta se insertó satisfactoriamente' AS Mensaje;
-				
             END IF;
 		END IF;
-        
 END //
 
 /*
 -- id_turno: 13
-
 SELECT * FROM turnos;
 SELECT * FROM consultas;
 
 CALL sp_registrar_consulta(13, 'Checkeo general', 'Mascota en estado óptimo');
 
-SELECT * FROM turnos;
-SELECT * FROM consultas;
+SELECT * FROM turnos ORDER BY fecha DESC;
+SELECT * FROM consultas ORDER BY fecha_consulta DESC;
 */
 
 -- ///////////// CREACION DE TRIGGERS /////////////
