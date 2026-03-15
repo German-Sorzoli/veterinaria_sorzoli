@@ -181,4 +181,54 @@ DELIMITER ;
 CALL sp_mascotas_de_cliente(1);
 */
 
--- Declaro un procedimiento
+-- Declaro un procedimiento para registrar un pago
+
+DELIMITER //
+
+DROP PROCEDURE IF EXISTS sp_registrar_pago //
+
+CREATE PROCEDURE sp_registrar_pago (
+IN _fecha DATE,
+IN _monto DECIMAL (10,2),
+IN _medio VARCHAR(30) ,
+IN _estado VARCHAR(30),
+IN _id_consulta INT,
+IN _id_cliente INT
+)
+BEGIN
+	IF _monto> 0
+    THEN
+		INSERT INTO pagos (fecha_pago, monto, medio_pago, estado_pago, id_consulta, id_cliente)
+		VALUES (_fecha, _monto, _medio, _estado, _id_consulta, _id_cliente);
+	ELSE 
+		SELECT 'Error: el monto del pago debe ser mayor que 0' AS mensaje;
+	END IF;
+END//
+
+DELIMITER ;
+
+/*
+CALL sp_registrar_pago(CURDATE(),8000,'Efectivo','Pagado',3,2);
+Cambiar ejemplo
+*/
+
+-- Procedimiento para registrar un nuevo turno
+
+DELIMITER //
+
+DROP PROCEDURE IF EXISTS sp_registrar_turno //
+
+CREATE PROCEDURE sp_registrar_turno (
+IN _fecha DATE,
+IN _hora TIME,
+IN _estado VARCHAR(30),
+IN _id_mascota INT,
+IN _id_veterinario INT
+)
+BEGIN
+	INSERT INTO turnos (fecha, hora, estado, id_mascota, id_veterinario)
+    VALUES (_fecha, _hora, _estado, _id_mascota, _id_veterinario);
+END//
+
+DELIMITER ;
+
