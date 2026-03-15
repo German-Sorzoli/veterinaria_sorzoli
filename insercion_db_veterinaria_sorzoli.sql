@@ -5,16 +5,16 @@ USE veterinaria_sorzoli;
 -- ////////////////// CLIENTES //////////////////
 
 INSERT INTO clientes (nombre, apellido, telefono, email, direccion) VALUES
-('Juan','Perez','1514567890','juanperez@gmail.com','Calle 12 345'),
-('Maria','Gomez','1515678901','mariagomez@gmail.com','Av 7 122'),
-('Carlos','Rodriguez','1516789012','carlosrodriguez@gmail.com','Calle 50 900'),
-('Lucia','Fernandez','1517890123','luciaf@gmail.com','Calle 25 1450'),
-('Martin','Lopez','1518901234','martinlopez@gmail.com','Av 44 650'),
-('Sofia','Martinez','1519012345','sofia@gmail.com','Calle 60 222'),
-('Diego','Suarez','1513456789','diegosuarez@gmail.com','Av 13 890'),
-('Valentina','Castro','1512345678','valecastro@gmail.com','Calle 8 130'),
-('Pedro','Ramirez','1511122334','pedro@gmail.com','Calle 70 450'),
-('Camila','Torres','1519988776','camila@gmail.com','Av 19 321');
+('JUAN','PEREZ','1514567890','juan.perez@yahoo.com','Calle 12 345'),
+('Maria','Gomez','1515678901',NULL,'Av 7 122'),
+('carlos','rodriguez','1516789012','c.rodriguez@outlook.com','Calle 50 900'),
+('LUCIA','FERNANDEZ','1517890123','luciaf@hotmail.com','Calle 25 1450'),
+('martin','lopez','1518901234',NULL,'Av 44 650'),
+('SOFIA','MARTINEZ','1519012345','sofia.martinez@icloud.com','Calle 60 222'),
+('Diego','Suarez','1513456789',NULL,'Av 13 890'),
+('valentina','castro','1512345678','vale.castro@protonmail.com','Calle 8 130'),
+('PeDro','RaMiRez','1511122334','pedro.ramirez@outlook.com','Calle 70 450'),
+('cAmiLa','tOrRes','1519988776',NULL,'Av 19 321');
 
 -- ////////////////// VETERINARIOS //////////////////
 

@@ -49,26 +49,32 @@ ORDER BY p.fecha_pago DESC;
 
 -- Vista para el historial completo de cada mascota
 CREATE OR REPLACE VIEW vista_historial_mascota AS
-SELECT
-    m.id_mascota AS ID_Mascota,
-    m.nombre AS Nombre_Mascota,
-    m.especie AS Especie,
-    m.raza AS Raza,
-    c.apellido AS Apellido_Dueno,
-    c.nombre AS Nombre_Dueno,
-    co.fecha_consulta AS Fecha_Consulta,
-    co.diagnostico AS Diagnostico,
-    co.observaciones AS Observaciones,
-    v.apellido AS Apellido_Veterinario,
-    v.nombre AS Nombre_Veterinario,
-    v.especialidad AS Especialidad
-FROM historial_medico AS h
-	JOIN mascotas AS m ON h.id_mascota = m.id_mascota
-	JOIN consultas AS co ON h.id_consulta = co.id_consulta
-	JOIN turnos AS t ON co.id_turno = t.id_turno
-	JOIN veterinarios AS v ON t.id_veterinario = v.id_veterinario
-	JOIN clientes AS c ON m.id_cliente = c.id_cliente
-ORDER BY m.nombre, co.fecha_consulta DESC;
+    SELECT 
+        m.id_mascota AS ID_Mascota,
+        m.nombre AS Nombre_Mascota,
+        m.especie AS Especie,
+        m.raza AS Raza,
+        c.apellido AS Apellido_Dueno,
+        c.nombre AS Nombre_Dueno,
+        co.fecha_consulta AS Fecha_Consulta,
+        co.diagnostico AS Diagnostico,
+        co.observaciones AS Observaciones,
+        v.apellido AS Apellido_Veterinario,
+        v.nombre AS Nombre_Veterinario,
+        v.especialidad AS Especialidad
+    FROM
+        historial_medico AS h
+            JOIN
+        mascotas AS m ON h.id_mascota = m.id_mascota
+            JOIN
+        consultas AS co ON h.id_consulta = co.id_consulta
+            JOIN
+        turnos AS t ON co.id_turno = t.id_turno
+            JOIN
+        veterinarios AS v ON t.id_veterinario = v.id_veterinario
+            JOIN
+        clientes AS c ON m.id_cliente = c.id_cliente
+    ORDER BY m.nombre , co.fecha_consulta DESC;
 
 
 -- ///////////// CREACION DE FUNCIONES /////////////
@@ -90,8 +96,6 @@ BEGIN
 	RETURN _edad_mascota;
 END//
 
-DELIMITER ;
-
 /*
 -- EJEMPLO DE LA FUNCION
 SELECT 
@@ -103,7 +107,7 @@ SELECT
 FROM mascotas AS m
 */
 
-DELIMITER //
+-- Declaro una funcion que calcule el total de pagos de un cliente
 
 DROP FUNCTION IF EXISTS veterinaria_sorzoli.fn_total_pagos_cliente //
 
@@ -118,8 +122,6 @@ BEGIN
 	RETURN IFNULL(_total_pagos,0);
 END //
 
-DELIMITER ;
-
 /*
 -- EJEMPLO DE LA FUNCION
 SELECT DISTINCT
@@ -130,10 +132,6 @@ FROM veterinaria_sorzoli.clientes AS cl
 */
 
 -- Funcion que devuelve la cantidad de consultas de una mascota
--- Pendiente
-
-DELIMITER //
-
 DROP FUNCTION IF EXISTS veterinaria_sorzoli.fn_cantidad_consultas_mascota //
 
 CREATE FUNCTION veterinaria_sorzoli.fn_cantidad_consultas_mascota (_id_mascota INT)
@@ -145,8 +143,6 @@ BEGIN
 	SELECT COUNT(*) INTO _cantidad_consultas FROM veterinaria_sorzoli.historial_medico AS hm WHERE hm.id_mascota = _id_mascota;
 	RETURN _cantidad_consultas;
 END//
-
-DELIMITER ;
 
 /*
 SELECT DISTINCT
@@ -161,10 +157,7 @@ JOIN veterinaria_sorzoli.mascotas AS m ON (hm.id_mascota = m.id_mascota)
 -- ///////////// CREACION DE STORED PROCEDURES /////////////
 
 -- Declaro un procedimiento para ver las mascotas de un cliente en orden alfabetico
-
-DELIMITER //
- 
--- DROP PROCEDURE sp_mascotas_de_cliente //
+DROP PROCEDURE IF EXISTS sp_mascotas_de_cliente //
  
 CREATE PROCEDURE sp_mascotas_de_cliente(IN _cliente INT)
 BEGIN
@@ -176,16 +169,12 @@ SELECT
 FROM mascotas AS m WHERE m.id_cliente = _cliente ORDER BY m.nombre;
 END//
 
-DELIMITER ;
 /*
 CALL sp_mascotas_de_cliente(1);
 */
 
 -- Declaro un procedimiento para registrar un pago
-
-DELIMITER //
-
--- DROP PROCEDURE IF EXISTS sp_registrar_pago //
+DROP PROCEDURE IF EXISTS sp_registrar_pago //
 
 CREATE PROCEDURE sp_registrar_pago (
 IN _fecha DATE,
@@ -205,18 +194,13 @@ BEGIN
 	END IF;
 END//
 
-DELIMITER ;
-
 /*
 CALL sp_registrar_pago(CURDATE(),8000,'Efectivo','Pagado',3,2);
 Cambiar ejemplo
 */
 
 -- Procedimiento para registrar un nuevo turno
-
-DELIMITER //
-
--- DROP PROCEDURE IF EXISTS sp_registrar_turno //
+DROP PROCEDURE IF EXISTS sp_registrar_turno //
 
 CREATE PROCEDURE sp_registrar_turno (
 IN _fecha DATE,
@@ -230,13 +214,8 @@ BEGIN
     VALUES (_fecha, _hora, _estado, _id_mascota, _id_veterinario);
 END//
 
-DELIMITER ;
-
 -- Procedimiento para registrar una con consulta, verificar si el turno existe y segun el caso, insertar la informacion pertinente
-
-DELIMITER //
-
--- DROP PROCEDURE IF EXISTS sp_registrar_consulta //
+DROP PROCEDURE IF EXISTS sp_registrar_consulta //
 
 CREATE PROCEDURE sp_registrar_consulta (
 IN _id_turno INT,
@@ -278,8 +257,6 @@ BEGIN
         
 END //
 
-DELIMITER ;
-
 /*
 -- id_turno: 13
 
@@ -291,3 +268,60 @@ CALL sp_registrar_consulta(13, 'Checkeo general', 'Mascota en estado óptimo');
 SELECT * FROM turnos;
 SELECT * FROM consultas;
 */
+
+-- ///////////// CREACION DE TRIGGERS /////////////
+
+-- Creo un trigger para pasar nombre y apellido de cliente a Mayúsculas iniciales
+DROP TRIGGER IF EXISTS tr_revision_nombre_apellido_cliente //
+
+CREATE TRIGGER tr_revision_nombre_apellido_cliente
+BEFORE INSERT ON clientes
+FOR EACH ROW
+BEGIN
+	SET NEW.nombre = CONCAT(UPPER(LEFT (NEW.nombre,1)), LOWER(SUBSTRING(NEW.nombre,2)));
+    
+    SET NEW.apellido = CONCAT(UPPER(LEFT (NEW.apellido,1)), LOWER(SUBSTRING(NEW.apellido,2)));
+END //
+
+-- Creo un trigger para asingar mail por defecto en caso de no tener
+DROP TRIGGER IF EXISTS tr_revision_mail //
+
+CREATE TRIGGER tr_revision_mail
+BEFORE INSERT ON clientes
+FOR EACH ROW
+BEGIN
+	IF NEW.email IS NULL THEN
+		SET NEW.email = CONCAT(lower(NEW.nombre),lower(NEW.apellido),'@default.com');
+	END IF;
+END //
+
+-- Trigger para validar pago mayor a cero
+DROP TRIGGER IF EXISTS tr_validar_pago //
+
+CREATE TRIGGER tr_validar_pago
+BEFORE INSERT ON pagos
+FOR EACH ROW
+BEGIN
+	IF NEW.monto < 0 THEN 
+		SIGNAL SQLSTATE '45000'
+		SET MESSAGE_TEXT = 'Error: el monto del pago debe ser mayor a 0';
+	END IF;
+END //
+
+-- Creo Trigger para registrar los datos de una consulta en el historial medico automaticamente
+DROP TRIGGER IF EXISTS tr_registro_historial_medico //
+
+CREATE TRIGGER tr_registro_historial_medico
+AFTER INSERT ON consultas
+FOR EACH ROW
+BEGIN
+	DECLARE _id_mascota int;
+		SELECT id_mascota
+		INTO _id_mascota
+		FROM turnos
+		WHERE id_turno = NEW.id_turno;
+	INSERT INTO historial_medico(fecha_registro, descripcion, id_mascota, id_consulta) VALUES
+    (CURDATE(),NEW.diagnostico, _id_mascota, NEW.id_consulta);
+END //
+
+DELIMITER ;

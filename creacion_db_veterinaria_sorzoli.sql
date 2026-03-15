@@ -1,6 +1,6 @@
 -- ///////////// CREACION DE LA BASE DE DATOS /////////////
 
-DROP DATABASE veterinaria_sorzoli;
+DROP DATABASE IF EXISTS veterinaria_sorzoli;
 
 CREATE DATABASE IF NOT EXISTS veterinaria_sorzoli;
 
