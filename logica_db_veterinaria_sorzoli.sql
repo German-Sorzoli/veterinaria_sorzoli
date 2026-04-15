@@ -31,6 +31,8 @@ FROM turnos AS t
 	JOIN veterinarios AS v ON t.id_veterinario = v.id_veterinario
 ORDER BY t.fecha DESC, t.hora DESC;
 
+-- SELECT * FROM vista_turnos_detalle;
+
 -- Vista para el listado de pagos realizados por clientes
 CREATE OR REPLACE VIEW vista_pagos_clientes AS
 SELECT
@@ -46,6 +48,8 @@ FROM pagos AS p
 	JOIN consultas AS co 	ON p.id_consulta = co.id_consulta
 	WHERE p.estado_pago = 'Pagado'
 ORDER BY p.fecha_pago DESC;
+
+-- SELECT * FROM vista_pagos_clientes;
 
 -- Vista para el historial completo de cada mascota
 CREATE OR REPLACE VIEW vista_historial_mascota AS
@@ -76,6 +80,7 @@ CREATE OR REPLACE VIEW vista_historial_mascota AS
         clientes AS c ON m.id_cliente = c.id_cliente
     ORDER BY m.nombre , co.fecha_consulta DESC;
 
+-- SELECT * FROM vista_historial_mascota;
 
 -- ///////////// CREACION DE FUNCIONES /////////////
 
@@ -128,7 +133,7 @@ SELECT DISTINCT
 	cl.nombre AS Nombre,
     cl.apellido AS Apellido,
 	veterinaria_sorzoli.fn_total_pagos_cliente(cl.id_cliente) AS Total_De_Pagos
-FROM veterinaria_sorzoli.clientes AS cl;
+FROM veterinaria_sorzoli.clientes AS Cl;
 */
 
 -- Funcion que devuelve la cantidad de consultas de una mascota
@@ -149,7 +154,7 @@ SELECT DISTINCT
     m.nombre,
     m.especie,
     m.raza,
-    fn_cantidad_consultas_mascota(hm.id_mascota) AS CantidadDeConsultas
+    veterinaria_sorzoli.fn_cantidad_consultas_mascota(hm.id_mascota) AS CantidadDeConsultas
 FROM veterinaria_sorzoli.historial_medico AS hm
 JOIN veterinaria_sorzoli.mascotas AS m ON (hm.id_mascota = m.id_mascota);
 */
@@ -161,6 +166,11 @@ DROP PROCEDURE IF EXISTS sp_mascotas_de_cliente //
  
 CREATE PROCEDURE sp_mascotas_de_cliente(IN _cliente INT)
 BEGIN
+	-- Verifico que el Cliente existe
+	IF NOT EXISTS (SELECT 1 FROM clientes WHERE id_cliente = _cliente) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Error: el cliente no existe';
+    END IF;
 SELECT
 	m.nombre,
     m.especie,
@@ -185,17 +195,43 @@ CREATE PROCEDURE sp_registrar_pago (
 	IN _id_cliente INT
 	)
 	BEGIN
-		IF _monto> 0
-		THEN
+		-- Valido monto mayor que 0
+		IF _monto <= 0 THEN
+			SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Error: el monto debe ser mayor a 0';
+		END IF;
+    -- Validar cliente
+		IF NOT EXISTS (SELECT 1 FROM clientes WHERE id_cliente = _id_cliente) THEN
+			SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Error: el cliente no existe';
+		END IF;
+    -- Validar consulta
+		IF NOT EXISTS (SELECT 1 FROM consultas WHERE id_consulta = _id_consulta) THEN
+			SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Error: la consulta no existe';
+		END IF;
+	-- Inserto datos si todo esta correcto
+		START TRANSACTION;
+        -- Si ya existe un pago para esa consulta, se actualiza
+		IF EXISTS (SELECT 1 FROM pagos WHERE id_consulta = _id_consulta) THEN
+			  UPDATE pagos
+				SET 
+					fecha_pago = _fecha,
+					monto = _monto,
+					medio_pago = _medio,
+					estado_pago = _estado,
+					id_cliente = _id_cliente
+				WHERE id_consulta = _id_consulta;
+		ELSE
 			INSERT INTO pagos (fecha_pago, monto, medio_pago, estado_pago, id_consulta, id_cliente)
 			VALUES (_fecha, _monto, _medio, _estado, _id_consulta, _id_cliente);
-		ELSE 
-			SELECT 'Error: el monto del pago debe ser mayor que 0' AS mensaje;
 		END IF;
+        
+		COMMIT;
 	END//
 
 /*
-CALL sp_registrar_pago(CURDATE(),8000,'Efectivo','Pagado',11,1);
+CALL sp_registrar_pago(CURDATE(),5000,'Efectivo','pagado',9,3);
 SELECT * FROM pagos ORDER BY fecha_pago DESC;
 */
 
@@ -215,12 +251,27 @@ BEGIN
     -- Me resulta mas comodo ingresar nombres antes que IDs
     DECLARE _id_mascota INT;
     DECLARE _id_veterinario INT;
+    
+    -- Si ocurre cualquier error → rollback automático
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+    
+    START TRANSACTION;
+    
 		-- Obtener ID de la mascota a partir del nombre
 		SELECT id_mascota 
 		INTO _id_mascota
 		FROM mascotas
 		WHERE nombre = _nombre_mascota
 		LIMIT 1;
+        -- Valido si se encontro mascota
+          IF _id_mascota IS NULL THEN
+			SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Error: mascota no encontrada';
+		END IF;
 		-- Obtener ID del veterinario a partir de nombre y apellido
 		SELECT id_veterinario
 		INTO _id_veterinario
@@ -228,13 +279,20 @@ BEGIN
 		WHERE nombre = _nombre_veterinario
 		  AND apellido = _apellido_veterinario
 		LIMIT 1;
-	-- Insertar el turno usando los IDs encontrados
-    INSERT INTO turnos (fecha, hora, estado, id_mascota, id_veterinario)
-    VALUES (_fecha, _hora, _estado, _id_mascota, _id_veterinario);
+        -- Valido si se encontro veterinario
+        IF _id_veterinario IS NULL THEN
+			SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Error: veterinario no encontrado';
+		END IF;
+		-- Insertar el turno usando los IDs encontrados
+		INSERT INTO turnos (fecha, hora, estado, id_mascota, id_veterinario)
+		VALUES (_fecha, _hora, _estado, _id_mascota, _id_veterinario);
+		
+	COMMIT;
 END //
 
 /*
-CALL sp_registrar_turno(CURDATE(),CURTIME(),'Pendiente','Bruno', 'Julieta', 'Sosa');
+CALL sp_registrar_turno(CURDATE(),CURTIME(),'pendiente','Bruno', 'Julieta', 'Sosa');
 -- Julieta Sosa: ID=8, Bruno ID= 10
 SELECT * FROM turnos ORDER BY fecha DESC;
 */
@@ -249,45 +307,48 @@ IN _observaciones VARCHAR(200)
 )
 
 BEGIN
-	DECLARE	_id_mascota INT;
     DECLARE _estado_turno VARCHAR(20);
-    
-    -- Filtro datos de los turnos previamente ingresados, comparando el numero de turno reservado
-	SELECT id_mascota, estado
-		INTO _id_mascota, _estado_turno
-		FROM turnos
-	WHERE id_turno = _id_turno;
     -- Si no hay resultado, descarto la opcion de ingresar consulta
-    IF _id_mascota IS NULL THEN
-	SELECT 'Error: El turno no existe' AS Mensaje;
-		-- Si el estado del turno no es pendiente (a concretar) se informará:
-        ELSE IF _estado_turno <> 'pendiente' THEN
-			SELECT 'Error: El turno ya fue realizada o cancelado' AS Mensaje;
-			ELSE
-				-- Inserto la informacion en la consulta
-				INSERT INTO consultas (fecha_consulta, diagnostico, observaciones, id_turno)
-				VALUES (CURDATE(), _diagnostico, _observaciones, _id_turno);
-				-- Actualizo el historial médico con la misma entrada
-				INSERT INTO historial_medico (fecha_registro, descripcion, id_mascota, id_consulta)
-				VALUES (CURDATE(), _diagnostico, _id_mascota, LAST_INSERT_ID()); -- LAST_INSERT_ID() Insertará y relacionar el ID del ultimo registro creado, en nuestro caso: consultas
-				-- Actualizo el estado del turno
-				UPDATE turnos
-				SET estado = 'completado'
-				WHERE id_turno = _id_turno;
-				SELECT 'La consulta se insertó satisfactoriamente' AS Mensaje;
-            END IF;
-		END IF;
+    IF NOT EXISTS (SELECT 1 FROM turnos WHERE id_turno = _id_turno) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Error: el turno no existe';
+    END IF;
+    -- Obtener estado del turno
+    -- Filtro datos de los turnos previamente ingresados, comparando el numero de turno reservado
+    SELECT estado
+    INTO _estado_turno
+    FROM turnos
+    WHERE id_turno = _id_turno;
+    -- Validar estado
+    IF _estado_turno <> 'pendiente' THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Error: el turno ya fue realizado o cancelado';
+    END IF;
+    
+    START TRANSACTION;   
+    
+    -- Insertar consulta
+    INSERT INTO consultas (fecha_consulta, diagnostico, observaciones, id_turno)
+    VALUES (CURDATE(), _diagnostico, _observaciones, _id_turno);
+    -- Actualizar estado del turno
+    UPDATE turnos
+    SET estado = 'completado'
+    WHERE id_turno = _id_turno;
+
+    COMMIT;
 END //
+
 
 /*
 -- id_turno: 13
-SELECT * FROM turnos;
-SELECT * FROM consultas;
+SELECT * FROM turnos ORDER BY fecha DESC;
+SELECT * FROM consultas ORDER BY fecha_consulta DESC;
 
 CALL sp_registrar_consulta(13, 'Checkeo general', 'Mascota en estado óptimo');
 
 SELECT * FROM turnos ORDER BY fecha DESC;
 SELECT * FROM consultas ORDER BY fecha_consulta DESC;
+SELECT * FROM historial_medico ORDER BY id_historial DESC;
 */
 
 -- ///////////// CREACION DE TRIGGERS /////////////
@@ -304,6 +365,13 @@ BEGIN
     SET NEW.apellido = CONCAT(UPPER(LEFT (NEW.apellido,1)), LOWER(SUBSTRING(NEW.apellido,2)));
 END //
 
+/*
+INSERT INTO clientes (nombre, apellido, telefono, email, direccion)
+VALUES ('juan', 'perez', '123456', NULL, 'Calle prueba');
+
+SELECT * FROM clientes ORDER BY id_cliente DESC;
+*/
+
 -- Creo un trigger para asingar mail por defecto en caso de no tener
 DROP TRIGGER IF EXISTS tr_revision_mail //
 
@@ -315,6 +383,13 @@ BEGIN
 		SET NEW.email = CONCAT(lower(NEW.nombre),lower(NEW.apellido),'@default.com');
 	END IF;
 END //
+
+/*
+INSERT INTO clientes (nombre, apellido, telefono, email, direccion)
+VALUES ('maria', 'lopez', '111111', NULL, 'Av prueba');
+
+SELECT * FROM clientes ORDER BY id_cliente DESC;
+*/
 
 -- Trigger para validar pago mayor a cero
 DROP TRIGGER IF EXISTS tr_validar_pago //
@@ -329,6 +404,12 @@ BEGIN
 	END IF;
 END //
 
+/*
+INSERT INTO pagos (fecha_pago, monto, medio_pago, estado_pago, id_consulta, id_cliente)
+VALUES ('2026-04-14', -500, 'Efectivo', 'Pagado', 1, 1);
+-- Error: el monto del pago debe ser mayor a 0
+*/
+
 -- Creo Trigger para registrar los datos de una consulta en el historial medico automaticamente
 DROP TRIGGER IF EXISTS tr_registro_historial_medico //
 
@@ -336,13 +417,33 @@ CREATE TRIGGER tr_registro_historial_medico
 AFTER INSERT ON consultas
 FOR EACH ROW
 BEGIN
-	DECLARE _id_mascota int;
-		SELECT id_mascota
-		INTO _id_mascota
-		FROM turnos
-		WHERE id_turno = NEW.id_turno;
-	INSERT INTO historial_medico(fecha_registro, descripcion, id_mascota, id_consulta) VALUES
-    (CURDATE(),NEW.diagnostico, _id_mascota, NEW.id_consulta);
+    DECLARE _id_mascota INT;
+    -- Obtener id de mascota
+    SELECT id_mascota
+    INTO _id_mascota
+    FROM turnos t
+    WHERE t.id_turno = NEW.id_turno;
+	-- Solo insertar si se encontró la mascota
+    IF _id_mascota IS NOT NULL THEN
+		-- Evitar duplicados
+		IF NOT EXISTS (SELECT 1 FROM historial_medico WHERE id_consulta = NEW.id_consulta)
+			THEN
+			INSERT INTO historial_medico (fecha_registro, descripcion,id_mascota,id_consulta) VALUES
+			(NEW.fecha_consulta,NEW.diagnostico,_id_mascota,NEW.id_consulta);
+		END IF;
+	END IF;
 END //
+
+/*
+-- Este ejemplo dispara el trigger automáticamente
+
+CALL sp_registrar_consulta(
+    2,
+    'Chequeo general',
+    'Todo en orden'
+);
+
+SELECT * FROM historial_medico ORDER BY id_historial DESC;
+*/
 
 DELIMITER ;

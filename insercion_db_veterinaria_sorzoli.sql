@@ -14,7 +14,17 @@ INSERT INTO clientes (nombre, apellido, telefono, email, direccion) VALUES
 ('Diego','Suarez','1513456789',NULL,'Av 13 890'),
 ('valentina','castro','1512345678','vale.castro@protonmail.com','Calle 8 130'),
 ('PeDro','RaMiRez','1511122334','pedro.ramirez@outlook.com','Calle 70 450'),
-('cAmiLa','tOrRes','1519988776',NULL,'Av 19 321');
+('cAmiLa','tOrRes','1519988776',NULL,'Av 19 321'),
+('andres','mendez','1512233445',NULL,'Calle 100 123'),
+('LAURA','paz','1513344556','laura.paz@gmail.com','Av 55 456'),
+('eStEbAn','ruiz','1514455667',NULL,'Calle 20 890'),
+('florencia','diaz','1515566778','flor.diaz@yahoo.com','Av 10 222'),
+('RICARDO','sosa','1516677889',NULL,'Calle 33 333'),
+('julian','pereyra','1517788990','julianp@gmail.com','Av 80 100'),
+('Micaela','lozano','1518899001',NULL,'Calle 44 210'),
+('tomas','arias','1519900112','tomas.a@hotmail.com','Av 90 555'),
+('BRUNO','navarro','1521011223',NULL,'Calle 77 777'),
+('camila','vega','1522122334','camivega@gmail.com','Av 22 888');
 
 -- ////////////////// VETERINARIOS //////////////////
 
@@ -28,7 +38,17 @@ INSERT INTO veterinarios (nombre, apellido, matricula, especialidad) VALUES
 ('Pablo','Benitez','VET1007','Cirugia'),
 ('Julieta','Sosa','VET1008','Dermatologia'),
 ('Gustavo','Acosta','VET1009','Cardiologia'),
-('Marina','Luna','VET1010','Clinica general');
+('Marina','Luna','VET1010','Clinica general'),
+('Sergio','Molina','VET1011','Clinica general'),
+('Paula','Herrera','VET1012','Cirugia'),
+('Martin','Castillo','VET1013','Dermatologia'),
+('Luciana','Ortega','VET1014','Cardiologia'),
+('Andres','Ibarra','VET1015','Traumatologia'),
+('Cecilia','Nuñez','VET1016','Clinica general'),
+('Diego','Campos','VET1017','Cirugia'),
+('Valeria','Vargas','VET1018','Dermatologia'),
+('Hector','Cabrera','VET1019','Cardiologia'),
+('Natalia','Reyes','VET1020','Clinica general');
 
 -- ////////////////// MASCOTAS //////////////////
 
@@ -44,7 +64,17 @@ INSERT INTO mascotas (nombre, especie, raza, fecha_nacimiento, sexo, id_cliente)
 ('Kiara','Gato','Angora','2020-08-18','Hembra',1),
 ('Bruno','Perro','Bulldog','2018-04-22','Macho',2),
 ('Mora','Perro','Border Collie','2021-03-12','Hembra',3),
-('Felix','Gato','Mestizo','2019-10-30','Macho',4);
+('Felix','Gato','Mestizo','2019-10-30','Macho',4),
+('bobby','Perro','Beagle','2020-01-10','Macho',11),
+('lola','Gato','Siames','2021-07-15','Hembra',12),
+('thor','Perro','Pitbull','2019-05-20','Macho',13),
+('Kira','Perro','Caniche','2022-03-05','Hembra',14),
+('garfield','Gato','Persa','2018-09-11','Macho',15),
+('simona','Perro','Golden','2023-02-01','Hembra',16),
+('cleo','Gato','Mestizo','2022-06-30','Hembra',17),
+('zeus','Perro','Pastor','2020-11-10','Macho',18),
+('oliver','Gato','Angora','2021-08-18','Macho',19),
+('rex','Perro','Doberman','2019-04-22','Macho',20);
 
 -- ////////////////// TURNOS //////////////////
 
@@ -71,7 +101,17 @@ INSERT INTO turnos (fecha, hora, estado, id_mascota, id_veterinario) VALUES
 ('2026-02-10','09:30:00','completado',4,2),
 ('2026-02-11','10:30:00','completado',5,3),
 ('2026-02-12','11:30:00','completado',6,1),
-('2026-02-13','12:30:00','completado',7,4);
+('2026-02-13','12:30:00','completado',7,4),
+('2026-03-01','09:00:00','pendiente',13,11),
+('2026-03-02','10:00:00','pendiente',14,12),
+('2026-03-03','11:00:00','pendiente',15,13),
+('2026-03-04','12:00:00','pendiente',16,14),
+('2026-03-05','09:30:00','completado',17,15),
+('2026-03-06','10:30:00','completado',18,16),
+('2026-03-07','11:30:00','completado',19,17),
+('2026-03-08','12:30:00','pendiente',20,18),
+('2026-03-09','09:15:00','pendiente',21,19),
+('2026-03-10','10:15:00','pendiente',22,20);
 
 -- ////////////////// CONSULTAS //////////////////
 
@@ -106,14 +146,24 @@ INSERT INTO servicios (nombre_servicio, descripcion, costo) VALUES
 ('Radiografia','Estudio por imagen',9000),
 ('Ecografia','Diagnostico por ultrasonido',10000),
 ('Internacion','Cuidado intensivo',15000),
-('Desparasitacion','Tratamiento antiparasitario',4000);
+('Desparasitacion','Tratamiento antiparasitario',4000),
+('Control cardiologico','Revision del corazon',8500),
+('Tratamiento digestivo','Problemas estomacales',6500),
+('Cirugia mayor','Operacion compleja',50000),
+('Control postoperatorio','Seguimiento',4000),
+('Vacuna triple','Vacuna combinada',4500),
+('Control ocular','Revision de ojos',3000),
+('Terapia fisica','Rehabilitacion',7000),
+('Analisis hormonal','Estudios hormonales',9500),
+('Consulta urgente','Atencion inmediata',10000),
+('Baño medicado','Higiene especial',3500);
 
 -- ////////////////// CONSULTAS SERVICIOS //////////////////
 
 INSERT INTO consultas_servicios VALUES
 (1,1),
 (2,5),
-(3,5),
+(3,3),
 (4,2),
 (5,6),
 (6,4),
@@ -141,25 +191,15 @@ INSERT INTO pagos (fecha_pago, monto, medio_pago, estado_pago, id_consulta, id_c
 ('2026-01-10',5000,'Transferencia','Pagado',7,1),
 ('2026-01-11',6000,'Tarjeta','Pagado',8,2),
 ('2026-02-01',5000,'Tarjeta','Pendiente',9,3),
-('2026-02-06',5000,'Efectivo','Pagado',10,1);
+('2026-02-06',5000,'Efectivo','Pagado',10,1),
+('2026-02-07',5000,'Efectivo','Pagado',11,1),
+('2026-02-08',4500,'Tarjeta','Pagado',12,2),
+('2026-02-09',7000,'Transferencia','Pagado',13,3),
+('2026-02-10',8500,'Efectivo','Pendiente',14,4),
+('2026-02-11',6000,'Tarjeta','Pagado',15,5),
+('2026-02-12',9000,'Transferencia','Pagado',16,6),
+('2026-02-13',10000,'Efectivo','Pendiente',17,7);
 
 -- ////////////////// HISTORIAL MEDICO //////////////////
 
-INSERT INTO historial_medico (fecha_registro, descripcion, id_mascota, id_consulta) VALUES
-('2026-01-02','Control general anual',1,1),
-('2026-01-03','Tratamiento por infeccion',2,2),
-('2026-01-04','Problema digestivo',3,3),
-('2026-01-05','Vacuna aplicada',4,4),
-('2026-01-06','Dermatitis tratada',5,5),
-('2026-01-07','Control dental',6,6),
-('2026-01-10','Chequeo general',9,7),
-('2026-01-11','Problema respiratorio',10,8),
-('2026-02-01','Dolor muscular',11,9),
-('2026-02-06','Control general',1,10),
-('2026-02-07','Vacuna aplicada',1,11),
-('2026-02-08','Problema digestivo tratado',2,12),
-('2026-02-09','Dolor articular controlado',3,13),
-('2026-02-10','Control general',4,14),
-('2026-02-11','Tratamiento alergia',5,15),
-('2026-02-12','Infeccion tratada',6,16),
-('2026-02-13','Chequeo general',7,17);
+-- Los insertara el TRIGGER automaticamente
