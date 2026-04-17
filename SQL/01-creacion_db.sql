@@ -132,3 +132,23 @@ ON pagos(fecha_pago);
 
 CREATE INDEX idx_consulta_fecha
 ON consultas(fecha_consulta);
+
+
+-- ///////////// CREACION DE USUARIOS /////////////
+
+
+/* Creacion de usuario para la Recepcion: nombre de usuario y contraseña.*/
+CREATE USER 'recepcion'@'localhost'
+IDENTIFIED BY 'Recep123!';
+
+/* Se le otorgan los permisos al recepcionista:
+ Solo puede registrar consultas, actualizar diagnosticos y ver el historial, no asi eliminar datos sensibles*/
+GRANT SELECT, INSERT ON veterinaria_sorzoli.* TO 'recepcion'@'localhost';
+
+/* Creacion de usuario para Administrador: nombre de usuario y contraseña.*/
+CREATE USER 'admin'@'localhost'
+IDENTIFIED BY 'admin123!';
+
+/* Se le otorgan todos los permisos al administrador:
+Tiene acceso completo a la base de datos*/
+GRANT ALL PRIVILEGES ON veterinaria_sorzoli.* TO 'admin'@'localhost';
